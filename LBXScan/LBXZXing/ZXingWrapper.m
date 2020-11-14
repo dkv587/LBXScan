@@ -57,6 +57,7 @@
         self.capture.delegate = self;
         self.continuous = NO;
         self.orientation = AVCaptureVideoOrientationPortrait;
+        self.capture.layer.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:.5f].CGColor;
         
         self.success = block;
         
@@ -83,6 +84,7 @@
         self.capture.delegate = self;
         self.continuous = NO;
         self.orientation = AVCaptureVideoOrientationPortrait;
+        self.capture.layer.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:.5f].CGColor;
         
         self.onSuccess = success;
         

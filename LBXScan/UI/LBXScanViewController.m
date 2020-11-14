@@ -125,7 +125,7 @@
 - (void)startScan
 {
     UIView *videoView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.view.frame), CGRectGetHeight(self.view.frame))];
-    videoView.backgroundColor = [UIColor clearColor];
+    videoView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:.5f];
     [self.view insertSubview:videoView atIndex:0];
     __weak __typeof(self) weakSelf = self;
     
