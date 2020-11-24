@@ -372,75 +372,75 @@
 
 -(void)imagePickerController:(UIImagePickerController*)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
 {
-    [picker dismissViewControllerAnimated:YES completion:nil];    
-    
-    __block UIImage* image = [info objectForKey:UIImagePickerControllerEditedImage];
-    
-    if (!image){
-        image = [info objectForKey:UIImagePickerControllerOriginalImage];
-    }
-    
     __weak __typeof(self) weakSelf = self;
+    [picker dismissViewControllerAnimated:YES completion:^{
+        __block UIImage* image = [info objectForKey:UIImagePickerControllerEditedImage];
         
-    switch (_libraryType) {
-        case SLT_Native:
-        {
-#ifdef LBXScan_Define_Native
-            if ([[[UIDevice currentDevice]systemVersion]floatValue] >= 8.0)
+        if (!image){
+            image = [info objectForKey:UIImagePickerControllerOriginalImage];
+        }
+            
+        switch (weakSelf.libraryType) {
+            case SLT_Native:
             {
-                [LBXScanNative recognizeImage:image success:^(NSArray<LBXScanResult *> *array) {
-                    [weakSelf scanResultWithArray:array];
+    #ifdef LBXScan_Define_Native
+                if ([[[UIDevice currentDevice]systemVersion]floatValue] >= 8.0)
+                {
+                    [LBXScanNative recognizeImage:image success:^(NSArray<LBXScanResult *> *array) {
+                        [weakSelf scanResultWithArray:array];
+                    }];
+                }
+                else
+                {
+                    [self showError:@"native低于ios8.0系统不支持识别图片条码"];
+                }
+    #endif
+            }
+                break;
+            case SLT_ZXing:
+            {
+    #ifdef LBXScan_Define_ZXing
+                
+                [ZXingWrapper recognizeImage:image block:^(ZXBarcodeFormat barcodeFormat, NSString *str) {
+                    
+                    LBXScanResult *result = [[LBXScanResult alloc]init];
+                    result.strScanned = str;
+                    result.imgScanned = image;
+                    result.strBarCodeType = [self convertZXBarcodeFormat:barcodeFormat];
+                    
+                    [weakSelf scanResultWithArray:@[result]];
                 }];
+    #endif
+                
             }
-            else
+                break;
+            case SLT_ZBar:
             {
-                [self showError:@"native低于ios8.0系统不支持识别图片条码"];
+    #ifdef LBXScan_Define_ZBar
+                [LBXZBarWrapper recognizeImage:image block:^(NSArray<LBXZbarResult *> *result) {
+                    
+                    //测试，只使用扫码结果第一项
+                    LBXZbarResult *firstObj = result[0];
+                    
+                    LBXScanResult *scanResult = [[LBXScanResult alloc]init];
+                    scanResult.strScanned = firstObj.strScanned;
+                    scanResult.imgScanned = firstObj.imgScanned;
+                    scanResult.strBarCodeType = [LBXZBarWrapper convertFormat2String:firstObj.format];
+                    
+                    [weakSelf scanResultWithArray:@[scanResult]];
+                    
+                }];
+    #endif
+                
             }
-#endif
+                break;
+                
+            default:
+                break;
         }
-            break;
-        case SLT_ZXing:
-        {
-#ifdef LBXScan_Define_ZXing
-            
-            [ZXingWrapper recognizeImage:image block:^(ZXBarcodeFormat barcodeFormat, NSString *str) {
-                
-                LBXScanResult *result = [[LBXScanResult alloc]init];
-                result.strScanned = str;
-                result.imgScanned = image;
-                result.strBarCodeType = [self convertZXBarcodeFormat:barcodeFormat];
-                
-                [weakSelf scanResultWithArray:@[result]];
-            }];
-#endif
-            
-        }
-            break;
-        case SLT_ZBar:
-        {
-#ifdef LBXScan_Define_ZBar
-            [LBXZBarWrapper recognizeImage:image block:^(NSArray<LBXZbarResult *> *result) {
-                
-                //测试，只使用扫码结果第一项
-                LBXZbarResult *firstObj = result[0];
-                
-                LBXScanResult *scanResult = [[LBXScanResult alloc]init];
-                scanResult.strScanned = firstObj.strScanned;
-                scanResult.imgScanned = firstObj.imgScanned;
-                scanResult.strBarCodeType = [LBXZBarWrapper convertFormat2String:firstObj.format];
-                
-                [weakSelf scanResultWithArray:@[scanResult]];
-                
-            }];
-#endif
-            
-        }
-            break;
-            
-        default:
-            break;
-    }
+    }];
 }
+
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker
 {
     NSLog(@"cancel");
